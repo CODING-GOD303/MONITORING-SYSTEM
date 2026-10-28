@@ -1,0 +1,2082 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Virtual Smart Grid – Wind Farm Monitor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link rel="stylesheet" href="stylesheet.css" />
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ["Inter", "system-ui", "sans-serif"],
+              mono: ["JetBrains Mono", "ui-monospace", "monospace"],
+            },
+          },
+        },
+      };
+    </script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="font-sans text-slate-200 antialiased min-h-screen">
+    <div class="flex min-h-screen">
+      <!-- Sidebar -->
+      <aside
+        class="hidden md:flex w-[72px] flex-col items-center gap-2 py-5 border-r border-slate-800/80 bg-slate-950/60"
+      >
+        <div
+          class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-emerald-400 grid place-items-center text-slate-900 mb-4"
+        >
+          <svg
+            class="w-6 h-6"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M13 2 3 14h9l-1 8 10-12h-9z" />
+          </svg>
+        </div>
+        <button
+          class="w-11 h-11 rounded-xl grid place-items-center bg-cyan-400/10 text-cyan-300 glow-cyan"
+          title="Overview"
+        >
+          <svg
+            class="w-5 h-5"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <rect x="3" y="3" width="7" height="9" rx="1.5" />
+            <rect x="14" y="3" width="7" height="5" rx="1.5" />
+            <rect x="14" y="12" width="7" height="9" rx="1.5" />
+            <rect x="3" y="16" width="7" height="5" rx="1.5" />
+          </svg>
+        </button>
+        <button
+          class="w-11 h-11 rounded-xl grid place-items-center text-slate-500 hover:text-slate-200 hover:bg-slate-800/60"
+          title="Assets"
+        >
+          <svg
+            class="w-5 h-5"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M12 12v10M12 12 5 6M12 12l7-6M12 12V2" />
+            <circle cx="12" cy="12" r="1.5" />
+          </svg>
+        </button>
+        <button
+          class="w-11 h-11 rounded-xl grid place-items-center text-slate-500 hover:text-slate-200 hover:bg-slate-800/60"
+          title="Analytics"
+        >
+          <svg
+            class="w-5 h-5"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M3 3v18h18" />
+            <path d="m7 15 4-4 3 3 5-6" />
+          </svg>
+        </button>
+        <button
+          class="w-11 h-11 rounded-xl grid place-items-center text-slate-500 hover:text-slate-200 hover:bg-slate-800/60"
+          title="Alerts"
+        >
+          <svg
+            class="w-5 h-5"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+            <path d="M10 21a2 2 0 0 0 4 0" />
+          </svg>
+        </button>
+        <div class="flex-1"></div>
+        <button
+          class="w-11 h-11 rounded-xl grid place-items-center text-slate-500 hover:text-slate-200 hover:bg-slate-800/60"
+          title="Settings"
+        >
+          <svg
+            class="w-5 h-5"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <circle cx="12" cy="12" r="3" />
+            <path
+              d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"
+            />
+          </svg>
+        </button>
+      </aside>
+
+      <main class="flex-1 min-w-0">
+        <header
+          class="flex flex-wrap items-center gap-3 px-4 sm:px-6 py-4 border-b border-slate-800/80 bg-slate-950/40 sticky top-0 z-20 backdrop-blur"
+        >
+          <div>
+            <h1 class="text-lg sm:text-xl font-semibold tracking-tight">
+              Virtual Smart Grid
+            </h1>
+            <p class="text-xs text-slate-400">
+              Wind Farm “Ridge-A” · 8 × 3.6 MW turbines
+            </p>
+          </div>
+          <div class="flex-1"></div>
+          <div
+            class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-400/10 text-emerald-300 text-xs font-medium"
+          >
+            <span class="w-2 h-2 rounded-full bg-emerald-400 pulse-dot"></span>
+            Grid connected
+          </div>
+          <div class="text-right">
+            <div id="clock" class="font-mono text-sm">--:--:--</div>
+            <div id="date" class="text-[11px] text-slate-400">—</div>
+          </div>
+        </header>
+
+        <div class="p-4 sm:p-6 space-y-4 sm:space-y-6">
+          <section
+            class="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4"
+            id="kpis"
+          ></section>
+
+          <section class="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
+            <div class="card xl:col-span-2 overflow-hidden relative">
+              <div
+                class="flex flex-wrap items-center justify-between gap-2 px-5 pt-4"
+              >
+                <div>
+                  <h2 class="font-semibold">Live 3D Site View</h2>
+                  <p class="text-xs text-slate-400">
+                    Drag to orbit · scroll to zoom · click a turbine
+                  </p>
+                </div>
+                <div class="flex items-center gap-2 text-[11px]">
+                  <span class="flex items-center gap-1.5"
+                    ><i class="w-2 h-2 rounded-full bg-emerald-400"></i
+                    >Online</span
+                  >
+                  <span class="flex items-center gap-1.5"
+                    ><i class="w-2 h-2 rounded-full bg-amber-400"></i
+                    >Warning</span
+                  >
+                  <span class="flex items-center gap-1.5"
+                    ><i class="w-2 h-2 rounded-full bg-rose-500"></i
+                    >Offline</span
+                  >
+                </div>
+              </div>
+              <div id="view" class="w-full h-[380px] sm:h-[560px] mt-2"></div>
+
+              <div
+                class="absolute left-5 bottom-4 right-5 flex flex-wrap items-end justify-between gap-3 pointer-events-none"
+              >
+                <div class="pointer-events-auto card px-4 py-3 w-full sm:w-72">
+                  <div class="flex items-center justify-between text-xs mb-2">
+                    <span class="text-slate-400">Wind simulation</span>
+                    <label
+                      class="flex items-center gap-2 cursor-pointer select-none"
+                    >
+                      <input
+                        id="autoWind"
+                        type="checkbox"
+                        checked
+                        class="accent-cyan-400"
+                      />
+                      <span>Auto</span>
+                    </label>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <input
+                      id="windSlider"
+                      type="range"
+                      min="0"
+                      max="28"
+                      step="0.5"
+                      value="9"
+                      class="flex-1"
+                      disabled
+                    />
+                    <span
+                      id="windLabel"
+                      class="font-mono text-sm w-16 text-right"
+                      >9.0 m/s</span
+                    >
+                  </div>
+                </div>
+                <div class="pointer-events-auto flex gap-2">
+                  <button
+                    id="btnReset"
+                    class="px-3 py-2 text-xs rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-slate-700"
+                  >
+                    Reset view
+                  </button>
+                  <button
+                    id="btnAuto"
+                    class="px-3 py-2 text-xs rounded-lg bg-cyan-400/15 text-cyan-300 hover:bg-cyan-400/25 border border-cyan-400/30"
+                  >
+                    Auto-rotate: on
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Selected turbine -->
+            <div class="card p-5 flex flex-col" id="detail"></div>
+          </section>
+
+          <!-- City load model -->
+          <section class="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
+            <div class="card xl:col-span-2 overflow-hidden">
+              <div
+                class="flex flex-wrap items-center justify-between gap-2 px-5 pt-4"
+              >
+                <div>
+                  <h2 class="font-semibold">City Load · Output Model</h2>
+                  <p class="text-xs text-slate-400">
+                    Prototype · click a district or the grid substation to trip
+                    its breaker
+                  </p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button
+                    id="cityBlackout"
+                    class="px-3 py-2 text-xs rounded-lg bg-rose-500/15 text-rose-300 hover:bg-rose-500/25 border border-rose-500/30"
+                  >
+                    Cut grid (blackout)
+                  </button>
+                  <button
+                    id="cityRestore"
+                    class="px-3 py-2 text-xs rounded-lg bg-emerald-400/15 text-emerald-300 hover:bg-emerald-400/25 border border-emerald-400/30"
+                  >
+                    Restore all
+                  </button>
+                </div>
+              </div>
+              <div
+                id="city"
+                class="relative w-full h-[380px] sm:h-[500px] mt-2"
+              >
+                <div
+                  id="cityLabels"
+                  class="absolute inset-0 z-10 pointer-events-none overflow-hidden"
+                ></div>
+              </div>
+            </div>
+            <div class="card p-5 flex flex-col" id="feeders"></div>
+          </section>
+
+          <!-- Chart + flow + alerts -->
+          <section class="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
+            <div class="card p-5 xl:col-span-2">
+              <div class="flex items-center justify-between mb-3">
+                <div>
+                  <h2 class="font-semibold">Generation vs. Grid Demand</h2>
+                  <p class="text-xs text-slate-400">Last 60 seconds · MW</p>
+                </div>
+                <div class="flex items-center gap-4 text-xs">
+                  <span class="flex items-center gap-1.5"
+                    ><i class="w-3 h-[3px] bg-cyan-400 rounded"></i
+                    >Generation</span
+                  >
+                  <span class="flex items-center gap-1.5"
+                    ><i class="w-3 h-[3px] bg-violet-400 rounded"></i
+                    >Demand</span
+                  >
+                </div>
+              </div>
+              <canvas id="chart" class="w-full h-56"></canvas>
+            </div>
+
+            <div class="card p-5">
+              <h2 class="font-semibold mb-1">Energy Flow</h2>
+              <p class="text-xs text-slate-400 mb-3">
+                Wind farm → substation → grid
+              </p>
+              <svg viewBox="0 0 320 170" class="w-full">
+                <g fill="none" stroke-width="2" stroke-linecap="round">
+                  <path d="M62 85 H130" stroke="#22d3ee" class="flow" />
+                  <path d="M190 85 H258" stroke="#34d399" class="flow" />
+                  <path d="M160 105 V140" stroke="#a78bfa" class="flow" />
+                </g>
+                <g>
+                  <text
+                    x="96"
+                    y="76"
+                    text-anchor="middle"
+                    fill="#f9a8d4"
+                    font-size="9"
+                    font-family="JetBrains Mono"
+                  >
+                    690 V
+                  </text>
+                  <text
+                    x="224"
+                    y="76"
+                    text-anchor="middle"
+                    fill="#f9a8d4"
+                    font-size="9"
+                    font-family="JetBrains Mono"
+                  >
+                    33 kV
+                  </text>
+                  <text
+                    id="flowA2"
+                    x="224"
+                    y="100"
+                    text-anchor="middle"
+                    fill="#fdba74"
+                    font-size="9"
+                    font-family="JetBrains Mono"
+                  >
+                    0 A
+                  </text>
+                  <rect
+                    x="10"
+                    y="55"
+                    width="52"
+                    height="60"
+                    rx="12"
+                    fill="#0f172a"
+                    stroke="#22d3ee"
+                    stroke-opacity=".5"
+                  />
+                  <text
+                    x="36"
+                    y="82"
+                    text-anchor="middle"
+                    fill="#67e8f9"
+                    font-size="10"
+                  >
+                    WIND
+                  </text>
+                  <text
+                    id="flowWind"
+                    x="36"
+                    y="100"
+                    text-anchor="middle"
+                    fill="#e2e8f0"
+                    font-size="11"
+                    font-family="JetBrains Mono"
+                  >
+                    0.0
+                  </text>
+
+                  <rect
+                    x="130"
+                    y="55"
+                    width="60"
+                    height="50"
+                    rx="12"
+                    fill="#0f172a"
+                    stroke="#94a3b8"
+                    stroke-opacity=".5"
+                  />
+                  <text
+                    x="160"
+                    y="76"
+                    text-anchor="middle"
+                    fill="#94a3b8"
+                    font-size="10"
+                  >
+                    SUBSTN
+                  </text>
+                  <text
+                    id="flowSub"
+                    x="160"
+                    y="94"
+                    text-anchor="middle"
+                    fill="#e2e8f0"
+                    font-size="11"
+                    font-family="JetBrains Mono"
+                  >
+                    0.0
+                  </text>
+
+                  <rect
+                    x="258"
+                    y="55"
+                    width="52"
+                    height="60"
+                    rx="12"
+                    fill="#0f172a"
+                    stroke="#34d399"
+                    stroke-opacity=".5"
+                  />
+                  <text
+                    x="284"
+                    y="82"
+                    text-anchor="middle"
+                    fill="#6ee7b7"
+                    font-size="10"
+                  >
+                    GRID
+                  </text>
+                  <text
+                    id="flowGrid"
+                    x="284"
+                    y="100"
+                    text-anchor="middle"
+                    fill="#e2e8f0"
+                    font-size="11"
+                    font-family="JetBrains Mono"
+                  >
+                    0.0
+                  </text>
+
+                  <rect
+                    x="130"
+                    y="140"
+                    width="60"
+                    height="26"
+                    rx="10"
+                    fill="#0f172a"
+                    stroke="#a78bfa"
+                    stroke-opacity=".5"
+                  />
+                  <text
+                    x="160"
+                    y="157"
+                    text-anchor="middle"
+                    fill="#c4b5fd"
+                    font-size="10"
+                  >
+                    BATTERY
+                  </text>
+                </g>
+              </svg>
+              <div class="grid grid-cols-2 gap-3 mt-2 text-xs">
+                <div class="rounded-lg bg-slate-900/70 p-3">
+                  <div class="text-slate-400">Battery SoC</div>
+                  <div id="soc" class="font-mono text-base mt-0.5">72%</div>
+                </div>
+                <div class="rounded-lg bg-slate-900/70 p-3">
+                  <div class="text-slate-400">Curtailment</div>
+                  <div id="curt" class="font-mono text-base mt-0.5">0.0 MW</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Electrical detail -->
+          <section class="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
+            <div class="card p-5">
+              <div class="flex items-center justify-between mb-1">
+                <h2 class="font-semibold">Three-Phase Bus</h2>
+                <span
+                  class="text-[11px] px-2 py-0.5 rounded-full bg-pink-400/10 text-pink-300"
+                  >33 kV</span
+                >
+              </div>
+              <p class="text-xs text-slate-400 mb-4">
+                Substation SS-1 · voltage (L-L) &amp; line current
+              </p>
+              <div id="phases" class="space-y-3"></div>
+              <div id="pq" class="grid grid-cols-3 gap-2 mt-4 text-xs"></div>
+            </div>
+            <div class="card p-5">
+              <h2 class="font-semibold mb-1">Input → Output → Usage</h2>
+              <p class="text-xs text-slate-400 mb-4">
+                Where the power goes · MW
+              </p>
+              <div id="balance" class="space-y-3"></div>
+            </div>
+            <div class="card p-5">
+              <h2 class="font-semibold mb-1">Energy Today</h2>
+              <p class="text-xs text-slate-400 mb-4">Cumulative counters</p>
+              <div id="energy" class="grid grid-cols-2 gap-3"></div>
+            </div>
+          </section>
+
+          <!-- Table + alerts -->
+          <section class="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
+            <div class="card p-5 xl:col-span-2 overflow-x-auto">
+              <h2 class="font-semibold mb-3">Turbine Fleet</h2>
+              <table class="w-full text-[13px] min-w-[820px]">
+                <thead>
+                  <tr
+                    class="text-left text-xs text-slate-400 border-b border-slate-800"
+                  >
+                    <th class="pb-2 font-medium">Unit</th>
+                    <th class="pb-2 font-medium">Status</th>
+                    <th class="pb-2 font-medium text-right">Wind</th>
+                    <th class="pb-2 font-medium text-right">RPM</th>
+                    <th class="pb-2 font-medium text-right">Volt (V)</th>
+                    <th class="pb-2 font-medium text-right">Amp (A)</th>
+                    <th class="pb-2 font-medium text-right">Input (MW)</th>
+                    <th class="pb-2 font-medium text-right">Output (MW)</th>
+                    <th class="pb-2 font-medium text-right">Usage (kW)</th>
+                    <th class="pb-2 font-medium w-32">Load</th>
+                  </tr>
+                </thead>
+                <tbody id="rows"></tbody>
+              </table>
+            </div>
+
+            <div class="card p-5">
+              <div class="flex items-center justify-between mb-3">
+                <h2 class="font-semibold">Alerts</h2>
+                <span
+                  id="alertCount"
+                  class="text-[11px] px-2 py-0.5 rounded-full bg-amber-400/15 text-amber-300"
+                  >0</span
+                >
+              </div>
+              <ul
+                id="alerts"
+                class="space-y-2.5 max-h-72 overflow-y-auto pr-1"
+              ></ul>
+            </div>
+          </section>
+
+          <footer class="text-center text-xs text-slate-600 pb-4">
+            UI prototype · simulated data
+          </footer>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      /* ------------------------------------------------------------------ *
+       *  Simulated data model
+       * ------------------------------------------------------------------ */
+      const RATED = 3.6;
+      const turbines = Array.from({ length: 8 }, (_, i) => ({
+        id: `WT-0${i + 1}`,
+        status: "online",
+        wind: 0,
+        rpm: 0,
+        power: 0,
+        temp: 48,
+        vib: 1.1,
+        yaw: 0,
+        pitch: 0,
+        volt: 0,
+        amp: 0,
+        input: 0,
+        aux: 0,
+        eff: 0.955,
+        pf: 0.96,
+      }));
+      turbines[5].status = "warn";
+      turbines[7].status = "offline";
+
+      const state = {
+        wind: 9,
+        auto: true,
+        selected: 0,
+        demand: 20,
+        soc: 72,
+        history: { gen: [], dem: [] },
+        alerts: [],
+        total: 0,
+        input: 0,
+        auxMW: 0,
+        net: 0,
+        batt: 0,
+        curtail: 0,
+        exportMW: 0,
+        freq: 50,
+        busV: 33,
+        amp: 0,
+        pf: 0.96,
+        mva: 0,
+        mvar: 0,
+        phases: [
+          { v: 33, i: 0 },
+          { v: 33, i: 0 },
+          { v: 33, i: 0 },
+        ],
+        energy: { produced: 84.2, exported: 79.6, aux: 1.9, peak: 0 },
+      };
+      /* ------------------------------------------------------------------ *
+       *  City load model (the "output" side): feeders + breakers
+       * ------------------------------------------------------------------ */
+      const feeders = [
+        {
+          id: "F1",
+          name: "Residential North",
+          type: "res",
+          base: 4.0,
+          on: true,
+          conn: 4200,
+          unit: "homes",
+          load: 0,
+          color: "#60a5fa",
+        },
+        {
+          id: "F2",
+          name: "Residential South",
+          type: "res",
+          base: 3.5,
+          on: true,
+          conn: 3600,
+          unit: "homes",
+          load: 0,
+          color: "#38bdf8",
+        },
+        {
+          id: "F3",
+          name: "Downtown Commercial",
+          type: "com",
+          base: 5.0,
+          on: true,
+          conn: 850,
+          unit: "businesses",
+          load: 0,
+          color: "#a78bfa",
+        },
+        {
+          id: "F4",
+          name: "Industrial Zone",
+          type: "ind",
+          base: 6.0,
+          on: true,
+          conn: 42,
+          unit: "factories",
+          load: 0,
+          color: "#fb923c",
+        },
+        {
+          id: "F5",
+          name: "Hospital & Critical",
+          type: "hos",
+          base: 1.2,
+          on: true,
+          conn: 3,
+          unit: "facilities",
+          load: 0,
+          color: "#f472b6",
+        },
+        {
+          id: "F6",
+          name: "Street Lighting",
+          type: "lit",
+          base: 0.8,
+          on: true,
+          conn: 1200,
+          unit: "lamps",
+          load: 0,
+          color: "#facc15",
+        },
+      ];
+      state.main = true; // main grid breaker (closed = city connected)
+      state.kick = 0; // transient frequency kick after a sudden load change
+      const energised = (f) => state.main && f.on;
+
+      function toggleFeeder(i) {
+        const f = feeders[i],
+          was = energised(f);
+        f.on = !f.on;
+        const now = energised(f);
+        if (was && !now) {
+          state.kick += f.load * 0.02;
+          pushAlert(
+            "crit",
+            `${f.id} ${f.name} tripped – ${f.load.toFixed(1)} MW shed`,
+          );
+          f.load = 0;
+        } else if (!was && now) {
+          state.kick -= f.base * 0.02;
+          pushAlert("info", `${f.id} ${f.name} re-energised`);
+        } else
+          pushAlert(
+            "info",
+            `${f.id} breaker ${f.on ? "closed" : "opened"} (main breaker is open)`,
+          );
+        updateCityLights();
+        render();
+      }
+      function toggleMain() {
+        if (state.main) {
+          const shed = feeders.reduce((s, f) => s + (f.on ? f.load : 0), 0);
+          state.main = false;
+          state.kick += shed * 0.02;
+          feeders.forEach((f) => (f.load = 0));
+          pushAlert(
+            "crit",
+            `Main grid breaker opened – ${shed.toFixed(1)} MW shed, city blackout`,
+          );
+        } else {
+          const back = feeders.reduce((s, f) => s + (f.on ? f.base : 0), 0);
+          state.main = true;
+          state.kick -= back * 0.02;
+          pushAlert("info", "Main grid breaker closed – feeders energising");
+        }
+        updateCityLights();
+        render();
+      }
+      function restoreAll() {
+        const wasShed = feeders.reduce(
+          (s, f) => s + (energised(f) ? 0 : f.base),
+          0,
+        );
+        state.main = true;
+        feeders.forEach((f) => (f.on = true));
+        state.kick -= wasShed * 0.02;
+        pushAlert("info", "City supply restored – all feeders energised");
+        updateCityLights();
+        render();
+      }
+
+      const statusColor = {
+        online: "#34d399",
+        warn: "#fbbf24",
+        offline: "#f43f5e",
+      };
+      const statusLabel = {
+        online: "Online",
+        warn: "Warning",
+        offline: "Offline",
+      };
+
+      function powerCurve(v) {
+        if (v < 3 || v > 25) return 0;
+        if (v >= 12) return RATED;
+        return RATED * Math.pow((v - 3) / 9, 3);
+      }
+      const rnd = (a, b) => a + Math.random() * (b - a);
+
+      function pushAlert(level, text) {
+        const t = new Date().toLocaleTimeString("en-GB");
+        state.alerts.unshift({ level, text, t });
+        state.alerts = state.alerts.slice(0, 12);
+      }
+      pushAlert("warn", "WT-06 gearbox vibration above threshold");
+      pushAlert("crit", "WT-08 offline – scheduled maintenance");
+      pushAlert("info", "Substation SS-1 synced with grid (50.00 Hz)");
+
+      let t0 = 0;
+      function tick() {
+        t0 += 1;
+        if (state.auto)
+          state.wind = Math.max(
+            0,
+            Math.min(28, 9 + 4 * Math.sin(t0 / 18) + rnd(-0.8, 0.8)),
+          );
+        let total = 0,
+          inputSum = 0,
+          auxSum = 0;
+        turbines.forEach((t, i) => {
+          t.wind = Math.max(0, state.wind * rnd(0.92, 1.08));
+          let p = powerCurve(t.wind);
+          if (t.status === "offline") p = 0;
+          if (t.status === "warn") p *= 0.8;
+          t.power = p;
+          t.rpm =
+            t.status === "offline"
+              ? 0
+              : p === 0
+                ? t.wind > 2
+                  ? 3
+                  : 0
+                : 7 + (9 * Math.min(t.wind, 12)) / 12;
+          t.temp +=
+            (42 + p * 9 + (t.status === "warn" ? 14 : 0) - t.temp) * 0.2 +
+            rnd(-0.3, 0.3);
+          t.vib =
+            t.status === "offline"
+              ? 0
+              : (t.status === "warn" ? 4.8 : 1.1) + p * 0.15 + rnd(-0.1, 0.1);
+          t.pitch = t.wind > 12 ? Math.min(25, (t.wind - 12) * 2) : 0;
+          t.yaw = 12 + i * 1.5 + Math.sin(t0 / 25 + i) * 4;
+
+          // electrical: 690 V generator, 3-phase  I = P / (√3 · V · PF)
+          const live = t.status !== "offline" && t.rpm > 0;
+          t.pf = t.status === "warn" ? 0.91 : 0.96 + rnd(-0.01, 0.01);
+          t.volt = live ? 690 * rnd(0.985, 1.015) : 0;
+          t.amp =
+            t.volt > 0 && p > 0
+              ? (p * 1e6) / (Math.sqrt(3) * t.volt * t.pf)
+              : 0;
+          t.eff = t.status === "warn" ? 0.9 : 0.955; // drivetrain + generator efficiency
+          t.input = p > 0 ? p / t.eff : 0; // shaft (mechanical) input, MW
+          t.aux =
+            t.status === "offline"
+              ? 4
+              : 18 + p * 22 + (t.temp > 55 ? 12 : 0) + rnd(-1, 1); // own usage, kW
+
+          total += p;
+          inputSum += t.input;
+          auxSum += t.aux;
+        });
+        // city demand = sum of energised feeders (each with its own daily-profile wobble)
+        const ph = t0 / 30;
+        const prof = {
+          res: 1 + 0.18 * Math.sin(ph),
+          com: 1 + 0.12 * Math.sin(ph + 1.5),
+          ind: 1 + 0.05 * Math.sin(t0 / 45),
+          hos: 1 + rnd(-0.03, 0.03),
+          lit: 1,
+        };
+        feeders.forEach((f) => {
+          f.load = energised(f)
+            ? f.base * prof[f.type] * (1 + rnd(-0.015, 0.015))
+            : 0;
+        });
+        state.demand = feeders.reduce((s, f) => s + f.load, 0);
+        state.kick *= 0.7;
+        // power balance: output → aux usage → battery → grid / curtailment
+        const auxMW = auxSum / 1000;
+        const net = Math.max(0, total - auxMW);
+        const surplus = net - state.demand;
+        let batt = Math.max(-3, Math.min(3, surplus)); // + charging / − discharging (3 MW max)
+        if (state.soc >= 100 && batt > 0) batt = 0;
+        if (state.soc <= 5 && batt < 0) batt = 0;
+        const curtail = Math.max(0, surplus - batt);
+        state.soc = Math.max(5, Math.min(100, state.soc + batt * 0.02));
+        Object.assign(state, {
+          total,
+          input: inputSum,
+          auxMW,
+          net,
+          batt,
+          curtail,
+          exportMW: net - batt - curtail,
+        });
+        state.freq =
+          50 +
+          (surplus > 0 ? 0.02 : -0.02) * Math.min(Math.abs(surplus), 3) +
+          rnd(-0.01, 0.01);
+        state.freq += state.kick; // shedding load makes frequency jump, then it settles
+
+        // 33 kV three-phase bus
+        state.busV = 33 * rnd(0.995, 1.005);
+        state.pf = total > 0.2 ? 0.965 + rnd(-0.01, 0.01) : 1;
+        state.mva = total / state.pf;
+        state.mvar = Math.sqrt(Math.max(0, state.mva ** 2 - total ** 2));
+        state.amp = (state.mva * 1e6) / (Math.sqrt(3) * state.busV * 1e3);
+        state.phases = [0, 1, 2].map(() => ({
+          v: state.busV * rnd(0.992, 1.008),
+          i: state.amp * rnd(0.97, 1.03),
+        }));
+
+        // energy counters (sped up ×10 so you can see them move)
+        state.energy.produced += (total / 3600) * 10;
+        state.energy.exported += (state.exportMW / 3600) * 10;
+        state.energy.aux += (auxMW / 3600) * 10;
+        state.energy.peak = Math.max(state.energy.peak, total);
+        state.history.gen.push(total);
+        state.history.dem.push(state.demand);
+        if (state.history.gen.length > 60) {
+          state.history.gen.shift();
+          state.history.dem.shift();
+        }
+        if (state.wind > 22 && t0 % 20 === 0)
+          pushAlert("warn", "High wind – pitch control engaged");
+        render();
+      }
+
+      /* ------------------------------------------------------------------ *
+       *  Rendering helpers
+       * ------------------------------------------------------------------ */
+      const $ = (id) => document.getElementById(id);
+
+      function kpiCard(label, value, unit, sub, accent, icon) {
+        return `<div class="card p-4 sm:p-5">
+    <div class="flex items-center justify-between">
+      <span class="text-xs text-slate-400">${label}</span>
+      <span class="w-8 h-8 rounded-lg grid place-items-center" style="background:${accent}1f;color:${accent}">${icon}</span>
+    </div>
+    <div class="mt-3 flex items-baseline gap-1.5">
+      <span class="text-2xl sm:text-3xl font-semibold font-mono tracking-tight">${value}</span>
+      <span class="text-sm text-slate-400">${unit}</span>
+    </div>
+    <div class="mt-1 text-xs text-slate-500">${sub}</div>
+  </div>`;
+      }
+      const ico = {
+        bolt: '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></svg>',
+        wind: '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 8h11a3 3 0 1 0-3-3M3 12h16a3 3 0 1 1-3 3M3 16h8"/></svg>',
+        wave: '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M2 12c2-6 4-6 6 0s4 6 6 0 4-6 6 0"/></svg>',
+        gauge:
+          '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 14 16 8"/><path d="M3 18a9 9 0 1 1 18 0"/></svg>',
+      };
+
+      Object.assign(ico, {
+        volt: '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 12h4l2-6 4 12 2-6h6"/></svg>',
+        amp: '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="M8 12h8m-3-3 3 3-3 3"/></svg>',
+        down: '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 4v14m-6-6 6 6 6-6"/></svg>',
+        load: '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 2v5M15 2v5M6 7h12v4a6 6 0 0 1-12 0zM12 17v5"/></svg>',
+      });
+
+      function render() {
+        const online = turbines.filter((t) => t.status !== "offline").length;
+        const cap = turbines.length * RATED;
+        const cf = (state.total / cap) * 100;
+        $("kpis").innerHTML =
+          kpiCard(
+            "Total Output",
+            state.total.toFixed(1),
+            "MW",
+            `${cf.toFixed(0)}% of ${cap.toFixed(1)} MW capacity`,
+            "#22d3ee",
+            ico.bolt,
+          ) +
+          kpiCard(
+            "Wind Speed",
+            state.wind.toFixed(1),
+            "m/s",
+            state.wind < 3
+              ? "Below cut-in"
+              : state.wind > 25
+                ? "Above cut-out"
+                : "Operating range",
+            "#60a5fa",
+            ico.wind,
+          ) +
+          kpiCard(
+            "Grid Frequency",
+            state.freq.toFixed(2),
+            "Hz",
+            Math.abs(state.freq - 50) < 0.05 ? "Stable" : "Deviation",
+            "#a78bfa",
+            ico.wave,
+          ) +
+          kpiCard(
+            "Availability",
+            `${online}/${turbines.length}`,
+            "units",
+            `${state.alerts.filter((a) => a.level !== "info").length} active alerts`,
+            "#34d399",
+            ico.gauge,
+          ) +
+          kpiCard(
+            "Bus Voltage",
+            state.busV.toFixed(1),
+            "kV",
+            `3-phase L-L · gens at 690 V`,
+            "#f472b6",
+            ico.volt,
+          ) +
+          kpiCard(
+            "Line Current",
+            Math.round(state.amp).toLocaleString(),
+            "A",
+            `PF ${state.pf.toFixed(2)} · ${state.mva.toFixed(1)} MVA`,
+            "#fb923c",
+            ico.amp,
+          ) +
+          kpiCard(
+            "Input (shaft)",
+            state.input.toFixed(1),
+            "MW",
+            `Drivetrain loss ${(state.input - state.total).toFixed(2)} MW`,
+            "#38bdf8",
+            ico.down,
+          ) +
+          kpiCard(
+            "Usage",
+            state.exportMW.toFixed(1),
+            "MW",
+            `Demand ${state.demand.toFixed(1)} MW · Aux ${(state.auxMW * 1000).toFixed(0)} kW`,
+            "#facc15",
+            ico.load,
+          );
+
+        $("clock").textContent = new Date().toLocaleTimeString("en-GB");
+        $("date").textContent = new Date().toLocaleDateString("en-GB", {
+          weekday: "long",
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        });
+        $("windLabel").textContent = state.wind.toFixed(1) + " m/s";
+        if (state.auto) $("windSlider").value = state.wind;
+
+        // detail panel
+        const t = turbines[state.selected];
+        const pPct = (t.power / RATED) * 100;
+        const stat = (k, v, u) =>
+          `<div class="rounded-xl bg-slate-900/70 p-2.5"><div class="text-[10px] text-slate-400 truncate">${k}</div><div class="font-mono text-sm mt-0.5">${v}<span class="text-[10px] text-slate-500 ml-1">${u}</span></div></div>`;
+        $("detail").innerHTML = `
+    <div class="flex items-start justify-between">
+      <div><div class="text-xs text-slate-400">Selected asset</div><h2 class="text-xl font-semibold">${t.id}</h2></div>
+      <span class="text-xs px-2.5 py-1 rounded-full font-medium" style="background:${statusColor[t.status]}22;color:${statusColor[t.status]}">${statusLabel[t.status]}</span>
+    </div>
+    <div class="my-3 grid place-items-center">
+      <div class="relative w-32 h-32">
+        <svg viewBox="0 0 120 120" class="w-full h-full -rotate-90">
+          <circle cx="60" cy="60" r="50" fill="none" stroke="#1e293b" stroke-width="10"/>
+          <circle cx="60" cy="60" r="50" fill="none" stroke="#22d3ee" stroke-width="10" stroke-linecap="round"
+            stroke-dasharray="${(pPct / 100) * 314} 314" style="transition: stroke-dasharray .8s"/>
+        </svg>
+        <div class="absolute inset-0 grid place-items-center text-center">
+          <div><div class="font-mono text-2xl font-semibold">${t.power.toFixed(2)}</div><div class="text-xs text-slate-400">MW out · ${pPct.toFixed(0)}%</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="text-[10px] uppercase tracking-wider text-slate-500 mb-1.5">Electrical</div>
+    <div class="grid grid-cols-3 gap-2 mb-3">
+      ${stat("Voltage", t.volt.toFixed(0), "V")}
+      ${stat("Current", t.amp.toFixed(0), "A")}
+      ${stat("Efficiency", t.input > 0 ? (t.eff * 100).toFixed(1) : "—", "%")}
+      ${stat("Input", t.input.toFixed(2), "MW")}
+      ${stat("Output", t.power.toFixed(2), "MW")}
+      ${stat("Usage (aux)", t.aux.toFixed(0), "kW")}
+    </div>
+    <div class="text-[10px] uppercase tracking-wider text-slate-500 mb-1.5">Mechanical</div>
+    <div class="grid grid-cols-3 gap-2">
+      ${stat("Wind", t.wind.toFixed(1), "m/s")}
+      ${stat("Rotor", t.rpm.toFixed(1), "rpm")}
+      ${stat("Gearbox", t.temp.toFixed(0), "°C")}
+      ${stat("Vibration", t.vib.toFixed(1), "mm/s")}
+      ${stat("Yaw", t.yaw.toFixed(0), "°")}
+      ${stat("Pitch", t.pitch.toFixed(0), "°")}
+    </div>
+    <div class="flex gap-2 mt-auto pt-5">
+      <button class="flex-1 py-2.5 rounded-xl text-sm font-medium bg-cyan-400/15 text-cyan-300 border border-cyan-400/30 hover:bg-cyan-400/25">Details</button>
+      <button id="btnToggle" class="flex-1 py-2.5 rounded-xl text-sm font-medium bg-slate-800 hover:bg-slate-700 border border-slate-700">${t.status === "offline" ? "Start" : "Stop"}</button>
+    </div>`;
+        $("btnToggle").onclick = () => {
+          const s = turbines[state.selected];
+          s.status = s.status === "offline" ? "online" : "offline";
+          pushAlert(
+            s.status === "offline" ? "crit" : "info",
+            `${s.id} ${s.status === "offline" ? "stopped by operator" : "restarted"}`,
+          );
+          updateRingColors();
+          render();
+        };
+
+        // table
+        $("rows").innerHTML = turbines
+          .map(
+            (x, i) => `
+    <tr data-i="${i}" class="border-b border-slate-800/60 hover:bg-slate-800/40 cursor-pointer ${i === state.selected ? "bg-cyan-400/5" : ""}">
+      <td class="py-2.5 font-medium">${x.id}</td>
+      <td><span class="inline-flex items-center gap-1.5 text-xs"><i class="w-2 h-2 rounded-full" style="background:${statusColor[x.status]}"></i>${statusLabel[x.status]}</span></td>
+      <td class="text-right font-mono">${x.wind.toFixed(1)}</td>
+      <td class="text-right font-mono">${x.rpm.toFixed(1)}</td>
+      <td class="text-right font-mono">${x.volt.toFixed(0)}</td>
+      <td class="text-right font-mono">${x.amp.toFixed(0)}</td>
+      <td class="text-right font-mono text-sky-300">${x.input.toFixed(2)}</td>
+      <td class="text-right font-mono text-cyan-300">${x.power.toFixed(2)}</td>
+      <td class="text-right font-mono text-amber-300">${x.aux.toFixed(0)}</td>
+      <td class="pl-4"><div class="h-1.5 rounded-full bg-slate-800 overflow-hidden"><div class="h-full rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400" style="width:${(x.power / RATED) * 100}%;transition:width .8s"></div></div></td>
+    </tr>`,
+          )
+          .join("");
+        document
+          .querySelectorAll("#rows tr")
+          .forEach((tr) => (tr.onclick = () => selectTurbine(+tr.dataset.i)));
+
+        // alerts
+        const lvl = {
+          info: ["#60a5fa", "Info"],
+          warn: ["#fbbf24", "Warning"],
+          crit: ["#f43f5e", "Critical"],
+        };
+        $("alerts").innerHTML = state.alerts
+          .map(
+            (a) => `
+    <li class="flex gap-3 rounded-xl bg-slate-900/70 p-3">
+      <span class="mt-1 w-2 h-2 rounded-full shrink-0" style="background:${lvl[a.level][0]}"></span>
+      <div class="min-w-0"><div class="text-sm leading-snug">${a.text}</div><div class="text-[11px] text-slate-500 mt-0.5">${lvl[a.level][1]} · ${a.t}</div></div>
+    </li>`,
+          )
+          .join("");
+        $("alertCount").textContent = state.alerts.filter(
+          (a) => a.level !== "info",
+        ).length;
+
+        // flow
+        $("flowWind").textContent = state.total.toFixed(1);
+        $("flowSub").textContent = state.net.toFixed(1);
+        $("flowGrid").textContent = state.exportMW.toFixed(1);
+        $("flowA2").textContent = Math.round(state.amp) + " A";
+        $("soc").textContent = state.soc.toFixed(0) + "%";
+        $("curt").textContent = state.curtail.toFixed(1) + " MW";
+
+        // three-phase bus
+        const phaseCol = ["#fbbf24", "#34d399", "#60a5fa"];
+        const iMax =
+          (((RATED * turbines.length) / 0.96) * 1e6) / (Math.sqrt(3) * 33e3);
+        $("phases").innerHTML = state.phases
+          .map(
+            (p, k) => `
+    <div>
+      <div class="flex items-center justify-between text-xs mb-1">
+        <span class="flex items-center gap-2"><i class="w-2 h-2 rounded-full" style="background:${phaseCol[k]}"></i>L${k + 1}</span>
+        <span class="font-mono text-slate-300">${p.v.toFixed(2)} kV · ${p.i.toFixed(0)} A</span>
+      </div>
+      <div class="h-1.5 rounded-full bg-slate-800 overflow-hidden"><div class="h-full rounded-full" style="width:${Math.min(100, (p.i / iMax) * 100)}%;background:${phaseCol[k]};transition:width .8s"></div></div>
+    </div>`,
+          )
+          .join("");
+        const mini = (k, v, u) =>
+          `<div class="rounded-lg bg-slate-900/70 p-2.5"><div class="text-slate-400">${k}</div><div class="font-mono text-sm mt-0.5">${v}<span class="text-slate-500 ml-1">${u}</span></div></div>`;
+        $("pq").innerHTML =
+          mini("Power factor", state.pf.toFixed(3), "") +
+          mini("Apparent", state.mva.toFixed(1), "MVA") +
+          mini("Reactive", state.mvar.toFixed(1), "MVAr");
+
+        // input → output → usage
+        const maxP = Math.max(state.input, 1);
+        const bar = (label, val, color, note) => `
+    <div>
+      <div class="flex items-center justify-between text-xs mb-1"><span class="text-slate-300">${label}</span><span class="font-mono">${val.toFixed(2)} MW</span></div>
+      <div class="h-2 rounded-full bg-slate-800 overflow-hidden"><div class="h-full rounded-full" style="width:${Math.min(100, (val / maxP) * 100)}%;background:${color};transition:width .8s"></div></div>
+      <div class="text-[11px] text-slate-500 mt-1">${note}</div>
+    </div>`;
+        $("balance").innerHTML =
+          bar(
+            "Input · shaft power",
+            state.input,
+            "#38bdf8",
+            "Mechanical power into the generators",
+          ) +
+          bar(
+            "Output · electrical",
+            state.total,
+            "#22d3ee",
+            `Efficiency ${state.input > 0 ? ((state.total / state.input) * 100).toFixed(1) : "0.0"}%`,
+          ) +
+          bar(
+            "→ Delivered to grid",
+            state.exportMW,
+            "#34d399",
+            `Grid demand ${state.demand.toFixed(1)} MW`,
+          ) +
+          bar(
+            "→ Auxiliary usage",
+            state.auxMW,
+            "#facc15",
+            "Yaw, cooling, hydraulics, heating",
+          ) +
+          bar(
+            "→ Battery " + (state.batt >= 0 ? "charging" : "discharging"),
+            Math.abs(state.batt),
+            "#a78bfa",
+            `State of charge ${state.soc.toFixed(0)}%`,
+          ) +
+          bar(
+            "→ Curtailed",
+            state.curtail,
+            "#f43f5e",
+            "Surplus the grid and battery cannot absorb",
+          );
+
+        // energy counters
+        const e = state.energy;
+        const cell = (k, v, u, c) =>
+          `<div class="rounded-xl bg-slate-900/70 p-3"><div class="text-[11px] text-slate-400">${k}</div><div class="font-mono text-xl mt-0.5" style="color:${c}">${v}<span class="text-xs text-slate-500 ml-1">${u}</span></div></div>`;
+        $("energy").innerHTML =
+          cell("Produced", e.produced.toFixed(1), "MWh", "#22d3ee") +
+          cell("Exported", e.exported.toFixed(1), "MWh", "#34d399") +
+          cell("Aux usage", (e.aux * 1000).toFixed(0), "kWh", "#facc15") +
+          cell("Peak output", e.peak.toFixed(1), "MW", "#f472b6") +
+          cell(
+            "Capacity factor",
+            ((state.total / (turbines.length * RATED)) * 100).toFixed(0),
+            "%",
+            "#60a5fa",
+          ) +
+          cell("Battery", state.soc.toFixed(0), "% SoC", "#a78bfa");
+
+        renderFeeders();
+        updateCityLabels();
+        drawChart();
+      }
+
+      /* ------------------------------------------------------------------ *
+       *  Chart (plain canvas)
+       * ------------------------------------------------------------------ */
+      function drawChart() {
+        const c = $("chart");
+        const dpr = window.devicePixelRatio || 1;
+        const w = c.clientWidth,
+          h = c.clientHeight;
+        if (c.width !== w * dpr) {
+          c.width = w * dpr;
+          c.height = h * dpr;
+        }
+        const g = c.getContext("2d");
+        g.setTransform(dpr, 0, 0, dpr, 0, 0);
+        g.clearRect(0, 0, w, h);
+        const padL = 34,
+          padB = 20,
+          padT = 8,
+          max = 32;
+        g.strokeStyle = "rgba(148,163,184,.12)";
+        g.fillStyle = "#64748b";
+        g.font = "10px JetBrains Mono, monospace";
+        g.lineWidth = 1;
+        for (let v = 0; v <= max; v += 8) {
+          const y = padT + (h - padT - padB) * (1 - v / max);
+          g.beginPath();
+          g.moveTo(padL, y);
+          g.lineTo(w, y);
+          g.stroke();
+          g.fillText(v, 4, y + 3);
+        }
+        const line = (arr, color, fill) => {
+          if (arr.length < 2) return;
+          const x = (i) => padL + (w - padL) * (i / 59),
+            y = (v) => padT + (h - padT - padB) * (1 - v / max);
+          const off = 60 - arr.length;
+          g.beginPath();
+          arr.forEach((v, i) =>
+            i ? g.lineTo(x(i + off), y(v)) : g.moveTo(x(i + off), y(v)),
+          );
+          g.strokeStyle = color;
+          g.lineWidth = 2;
+          g.lineJoin = "round";
+          g.stroke();
+          if (fill) {
+            g.lineTo(x(59), h - padB);
+            g.lineTo(x(off), h - padB);
+            g.closePath();
+            const gr = g.createLinearGradient(0, 0, 0, h);
+            gr.addColorStop(0, color + "44");
+            gr.addColorStop(1, color + "00");
+            g.fillStyle = gr;
+            g.fill();
+          }
+        };
+        line(state.history.gen, "#22d3ee", true);
+        line(state.history.dem, "#a78bfa", false);
+      }
+
+      /* ------------------------------------------------------------------ *
+       *  Three.js – 3D wind farm
+       * ------------------------------------------------------------------ */
+      const container = $("view");
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x070b14);
+      scene.fog = new THREE.Fog(0x070b14, 40, 95);
+
+      const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 300);
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.shadowMap.enabled = true;
+      container.appendChild(renderer.domElement);
+
+      scene.add(new THREE.HemisphereLight(0x9ecbff, 0x0b1220, 0.9));
+      const sun = new THREE.DirectionalLight(0xffffff, 1.0);
+      sun.position.set(18, 30, 14);
+      sun.castShadow = true;
+      sun.shadow.mapSize.set(1024, 1024);
+      Object.assign(sun.shadow.camera, {
+        left: -30,
+        right: 30,
+        top: 30,
+        bottom: -30,
+        near: 1,
+        far: 80,
+      });
+      scene.add(sun);
+
+      // ground + grid
+      const ground = new THREE.Mesh(
+        new THREE.CircleGeometry(60, 64),
+        new THREE.MeshStandardMaterial({ color: 0x0d1626, roughness: 1 }),
+      );
+      ground.rotation.x = -Math.PI / 2;
+      ground.receiveShadow = true;
+      scene.add(ground);
+      const grid = new THREE.GridHelper(120, 60, 0x1e3a5f, 0x13233a);
+      grid.position.y = 0.01;
+      grid.material.transparent = true;
+      grid.material.opacity = 0.5;
+      scene.add(grid);
+
+      // substation
+      const sub = new THREE.Mesh(
+        new THREE.BoxGeometry(2.4, 1.4, 1.8),
+        new THREE.MeshStandardMaterial({
+          color: 0x334155,
+          metalness: 0.4,
+          roughness: 0.5,
+        }),
+      );
+      sub.position.set(-13, 0.7, 11);
+      sub.castShadow = true;
+      scene.add(sub);
+
+      const bladeMat = new THREE.MeshStandardMaterial({
+        color: 0xf1f5f9,
+        roughness: 0.35,
+        metalness: 0.1,
+      });
+      const towerMat = new THREE.MeshStandardMaterial({
+        color: 0xe2e8f0,
+        roughness: 0.5,
+      });
+      const turbineObjs = [];
+
+      function buildTurbine(i, x, z) {
+        const group = new THREE.Group();
+        group.position.set(x, 0, z);
+
+        const tower = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.16, 0.34, 9, 20),
+          towerMat,
+        );
+        tower.position.y = 4.5;
+        tower.castShadow = true;
+        group.add(tower);
+
+        const nacelleGroup = new THREE.Group();
+        nacelleGroup.position.y = 9.1;
+        group.add(nacelleGroup);
+        const nacelle = new THREE.Mesh(
+          new THREE.BoxGeometry(0.7, 0.6, 1.5),
+          towerMat,
+        );
+        nacelle.castShadow = true;
+        nacelleGroup.add(nacelle);
+
+        const rotor = new THREE.Group();
+        rotor.position.z = 0.95;
+        nacelleGroup.add(rotor);
+        const hub = new THREE.Mesh(
+          new THREE.SphereGeometry(0.28, 20, 16),
+          towerMat,
+        );
+        rotor.add(hub);
+        for (let b = 0; b < 3; b++) {
+          const arm = new THREE.Group();
+          arm.rotation.z = (b * Math.PI * 2) / 3;
+          const shape = new THREE.Shape();
+          shape.moveTo(-0.14, 0.2);
+          shape.lineTo(0.14, 0.2);
+          shape.lineTo(0.03, 4.3);
+          shape.lineTo(-0.03, 4.3);
+          shape.closePath();
+          const blade = new THREE.Mesh(
+            new THREE.ExtrudeGeometry(shape, {
+              depth: 0.05,
+              bevelEnabled: false,
+            }),
+            bladeMat,
+          );
+          blade.castShadow = true;
+          blade.userData.index = i;
+          arm.add(blade);
+          rotor.add(arm);
+        }
+
+        // status ring on ground
+        const ring = new THREE.Mesh(
+          new THREE.RingGeometry(1.5, 1.75, 48),
+          new THREE.MeshBasicMaterial({
+            color: 0x34d399,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0.9,
+          }),
+        );
+        ring.rotation.x = -Math.PI / 2;
+        ring.position.y = 0.03;
+        group.add(ring);
+
+        // beacon
+        const beacon = new THREE.Mesh(
+          new THREE.SphereGeometry(0.12, 12, 12),
+          new THREE.MeshBasicMaterial({ color: 0x34d399 }),
+        );
+        beacon.position.set(0, 0.45, -0.5);
+        nacelleGroup.add(beacon);
+
+        tower.userData.index =
+          nacelle.userData.index =
+          hub.userData.index =
+          ring.userData.index =
+            i;
+        scene.add(group);
+        turbineObjs.push({
+          group,
+          rotor,
+          nacelleGroup,
+          ring,
+          beacon,
+          angle: Math.random() * 6,
+        });
+      }
+      const cols = 4,
+        spacingX = 9,
+        spacingZ = 11;
+      for (let i = 0; i < 8; i++) {
+        const c = i % cols,
+          r = Math.floor(i / cols);
+        buildTurbine(
+          i,
+          (c - (cols - 1) / 2) * spacingX,
+          (r - 0.5) * spacingZ - 1,
+        );
+      }
+
+      function updateRingColors() {
+        turbineObjs.forEach((o, i) => {
+          const col = new THREE.Color(statusColor[turbines[i].status]);
+          o.ring.material.color.copy(col);
+          o.beacon.material.color.copy(col);
+          o.ring.material.opacity = i === state.selected ? 1 : 0.35;
+          o.ring.scale.setScalar(i === state.selected ? 1.25 : 1);
+        });
+      }
+      function selectTurbine(i) {
+        state.selected = i;
+        updateRingColors();
+        render();
+      }
+
+      /* orbit camera (no external controls needed) */
+      const cam = {
+        theta: 0.7,
+        phi: 1.05,
+        r: 34,
+        target: new THREE.Vector3(0, 4, 0),
+        autoRotate: true,
+      };
+      const cam0 = { ...cam, target: cam.target.clone() };
+      function placeCamera() {
+        camera.position.set(
+          cam.target.x + cam.r * Math.sin(cam.phi) * Math.sin(cam.theta),
+          cam.target.y + cam.r * Math.cos(cam.phi),
+          cam.target.z + cam.r * Math.sin(cam.phi) * Math.cos(cam.theta),
+        );
+        camera.lookAt(cam.target);
+      }
+      let drag = null;
+      const el = renderer.domElement;
+      el.addEventListener("pointerdown", (e) => {
+        drag = { x: e.clientX, y: e.clientY, moved: 0 };
+        el.setPointerCapture(e.pointerId);
+      });
+      el.addEventListener("pointermove", (e) => {
+        if (!drag) return;
+        const dx = e.clientX - drag.x,
+          dy = e.clientY - drag.y;
+        drag.x = e.clientX;
+        drag.y = e.clientY;
+        drag.moved += Math.abs(dx) + Math.abs(dy);
+        cam.theta -= dx * 0.006;
+        cam.phi = Math.max(0.25, Math.min(1.45, cam.phi - dy * 0.006));
+      });
+      el.addEventListener("pointerup", (e) => {
+        if (drag && drag.moved < 5) pick(e);
+        drag = null;
+      });
+      el.addEventListener(
+        "wheel",
+        (e) => {
+          e.preventDefault();
+          cam.r = Math.max(12, Math.min(60, cam.r + e.deltaY * 0.03));
+        },
+        { passive: false },
+      );
+
+      const ray = new THREE.Raycaster(),
+        mouse = new THREE.Vector2();
+      function pick(e) {
+        const rect = el.getBoundingClientRect();
+        mouse.set(
+          ((e.clientX - rect.left) / rect.width) * 2 - 1,
+          -((e.clientY - rect.top) / rect.height) * 2 + 1,
+        );
+        ray.setFromCamera(mouse, camera);
+        const hits = ray
+          .intersectObjects(scene.children, true)
+          .filter((h) => h.object.userData.index !== undefined);
+        if (hits.length) selectTurbine(hits[0].object.userData.index);
+      }
+
+      function resize() {
+        const w = container.clientWidth,
+          h = container.clientHeight;
+        renderer.setSize(w, h);
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        drawChart();
+      }
+      new ResizeObserver(resize).observe(container);
+      window.addEventListener("resize", resize);
+
+      const clock = new THREE.Clock();
+      function animate() {
+        requestAnimationFrame(animate);
+        const dt = clock.getDelta();
+        turbineObjs.forEach((o, i) => {
+          const t = turbines[i];
+          o.angle += ((t.rpm * Math.PI * 2) / 60) * dt * 3; // 3× for visibility
+          o.rotor.rotation.z = o.angle;
+          o.nacelleGroup.rotation.y +=
+            ((t.yaw * Math.PI) / 180 - o.nacelleGroup.rotation.y) * 0.02;
+          if (t.status === "warn")
+            o.beacon.visible = Math.floor(performance.now() / 400) % 2 === 0;
+          else o.beacon.visible = true;
+        });
+        if (cam.autoRotate && !drag) cam.theta += dt * 0.08;
+        placeCamera();
+        renderer.render(scene, camera);
+        renderCity(dt);
+      }
+
+      /* ------------------------------------------------------------------ *
+       *  UI wiring
+       * ------------------------------------------------------------------ */
+      $("autoWind").onchange = (e) => {
+        state.auto = e.target.checked;
+        $("windSlider").disabled = state.auto;
+      };
+      $("windSlider").oninput = (e) => {
+        state.wind = +e.target.value;
+      };
+      $("btnReset").onclick = () => {
+        Object.assign(cam, { theta: cam0.theta, phi: cam0.phi, r: cam0.r });
+      };
+      $("btnAuto").onclick = () => {
+        cam.autoRotate = !cam.autoRotate;
+        $("btnAuto").textContent =
+          "Auto-rotate: " + (cam.autoRotate ? "on" : "off");
+      };
+
+      /* ------------------------------------------------------------------ *
+       *  Feeder control panel
+       * ------------------------------------------------------------------ */
+      function renderFeeders() {
+        const shed = feeders.reduce(
+          (s, f) => s + (energised(f) ? 0 : f.base),
+          0,
+        );
+        const conn = feeders.reduce(
+          (s, f) => s + (energised(f) || f.type === "hos" ? 0 : f.conn),
+          0,
+        );
+        const sw = (on, attr) =>
+          `<button ${attr} aria-pressed="${on}" class="relative shrink-0 w-11 h-6 rounded-full transition-colors ${on ? "bg-emerald-400" : "bg-slate-700"}"><i class="absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all" style="left:${on ? 22 : 2}px"></i></button>`;
+        const box = (k, v, u, c) =>
+          `<div class="rounded-xl bg-slate-900/70 p-2.5"><div class="text-[10px] text-slate-400">${k}</div><div class="font-mono text-sm mt-0.5" style="color:${c}">${v}<span class="text-[10px] text-slate-500 ml-1">${u}</span></div></div>`;
+        $("feeders").innerHTML = `
+    <div class="flex items-start justify-between">
+      <div><h2 class="font-semibold">Feeder Control</h2><p class="text-xs text-slate-400">Breakers between the grid and the city</p></div>
+      <span class="text-[11px] px-2.5 py-1 rounded-full font-medium ${state.main ? "bg-emerald-400/10 text-emerald-300" : "bg-rose-500/15 text-rose-300"}">${state.main ? "Energised" : "Blackout"}</span>
+    </div>
+    <div class="mt-4 flex items-center justify-between rounded-xl bg-slate-900/70 p-3 border ${state.main ? "border-emerald-400/20" : "border-rose-500/30"}">
+      <div><div class="text-sm font-medium">Main grid breaker</div><div class="text-[11px] text-slate-400">${state.main ? "Closed · city is connected" : "Open · city isolated from grid"}</div></div>
+      ${sw(state.main, "data-master")}
+    </div>
+    <div class="grid grid-cols-3 gap-2 mt-3">
+      ${box("City demand", state.demand.toFixed(1), "MW", "#facc15")}
+      ${box("Load shed", shed.toFixed(1), "MW", shed > 0 ? "#f43f5e" : "#94a3b8")}
+      ${box("No power", conn.toLocaleString(), "conn.", conn > 0 ? "#f43f5e" : "#94a3b8")}
+    </div>
+    <ul class="mt-4 space-y-2">
+      ${feeders
+        .map((f, i) => {
+          const on = energised(f),
+            backup = f.type === "hos" && !on;
+          return `<li class="flex items-center gap-3 rounded-xl bg-slate-900/70 p-3">
+          <i class="w-1.5 h-8 rounded-full shrink-0" style="background:${on ? f.color : backup ? "#fbbf24" : "#334155"}"></i>
+          <div class="min-w-0 flex-1">
+            <div class="text-sm font-medium truncate">${f.id} · ${f.name}</div>
+            <div class="text-[11px] text-slate-400">${f.conn.toLocaleString()} ${f.unit} · ${backup ? "Backup generator" : on ? "Supplied" : "No supply"}</div>
+          </div>
+          <div class="text-right"><div class="font-mono text-sm ${on ? "" : "text-slate-600"}">${f.load.toFixed(1)}</div><div class="text-[10px] text-slate-500">MW</div></div>
+          ${sw(f.on, `data-f="${i}"`)}
+        </li>`;
+        })
+        .join("")}
+    </ul>`;
+      }
+      // pointerdown (not click) so a refresh between press and release can't swallow the toggle
+      $("feeders").addEventListener("pointerdown", (e) => {
+        const b = e.target.closest("[data-f],[data-master]");
+        if (!b) return;
+        e.preventDefault();
+        if (b.dataset.master !== undefined) toggleMain();
+        else toggleFeeder(+b.dataset.f);
+      });
+      $("cityBlackout").onclick = () => {
+        if (state.main) toggleMain();
+      };
+      $("cityRestore").onclick = restoreAll;
+
+      /* ------------------------------------------------------------------ *
+       *  City 3D scene (separate Three.js scene + orbit camera)
+       * ------------------------------------------------------------------ */
+      (function cityScene() {
+        const host = $("city");
+        const S = new THREE.Scene();
+        S.background = new THREE.Color(0x050810);
+        S.fog = new THREE.Fog(0x050810, 50, 125);
+        const C = new THREE.PerspectiveCamera(45, 1, 0.1, 300);
+        const R = new THREE.WebGLRenderer({ antialias: true });
+        R.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        host.appendChild(R.domElement);
+        S.add(new THREE.HemisphereLight(0x6b8cc4, 0x0a0f1a, 0.6));
+        const moon = new THREE.DirectionalLight(0xaec4ff, 0.55);
+        moon.position.set(-25, 35, -15);
+        S.add(moon);
+
+        // per-feeder bookkeeping
+        const warm = [
+          0xffd58a, 0xffd58a, 0xbfe3ff, 0xfff0b0, 0xfff6e0, 0xffd58a,
+        ];
+        feeders.forEach((f, i) => {
+          f.warm = warm[i];
+          f.lit = 1;
+        });
+        const groups = feeders.map(() => {
+          const g = new THREE.Group();
+          S.add(g);
+          return g;
+        });
+        const mats = feeders.map(() => []); // window materials (emissive)
+        const trims = feeders.map(() => []); // basic-material accents (lamps, beacons, pads)
+        const addTrim = (fi, m, on, off) =>
+          trims[fi].push({
+            m,
+            on: new THREE.Color(on),
+            off: new THREE.Color(off),
+          });
+
+        // window texture: 4×4 grid of lit / unlit windows
+        const wc = document.createElement("canvas");
+        wc.width = wc.height = 64;
+        const wg = wc.getContext("2d");
+        wg.fillStyle = "#000";
+        wg.fillRect(0, 0, 64, 64);
+        for (let y = 0; y < 4; y++)
+          for (let x = 0; x < 4; x++) {
+            if (Math.random() < 0.78) {
+              wg.fillStyle = Math.random() < 0.2 ? "#7a6a48" : "#ffffff";
+              wg.fillRect(x * 16 + 3, y * 16 + 4, 10, 8);
+            }
+          }
+        const winTex = new THREE.CanvasTexture(wc);
+        winTex.wrapS = winTex.wrapT = THREE.RepeatWrapping;
+        winTex.magFilter = THREE.NearestFilter;
+
+        function bMat(fi, rx, ry) {
+          const t = winTex.clone();
+          t.needsUpdate = true;
+          t.repeat.set(rx, ry);
+          t.offset.set(Math.random(), Math.random());
+          const m = new THREE.MeshStandardMaterial({
+            color: 0x1b2435,
+            roughness: 0.85,
+            emissive: new THREE.Color(feeders[fi].warm),
+            emissiveMap: t,
+            emissiveIntensity: 1.3,
+          });
+          mats[fi].push(m);
+          return m;
+        }
+        function addBox(fi, x, z, w, h, d, rx, ry) {
+          const m = new THREE.Mesh(
+            new THREE.BoxGeometry(w, h, d),
+            bMat(fi, rx, ry),
+          );
+          m.position.set(x, h / 2, z);
+          m.userData.feeder = fi;
+          groups[fi].add(m);
+          return m;
+        }
+
+        // ground, roads, district pads
+        const ground = new THREE.Mesh(
+          new THREE.PlaneGeometry(90, 70),
+          new THREE.MeshStandardMaterial({ color: 0x0b111d, roughness: 1 }),
+        );
+        ground.rotation.x = -Math.PI / 2;
+        S.add(ground);
+        const roadMat = new THREE.MeshStandardMaterial({
+          color: 0x151c2b,
+          roughness: 0.9,
+        });
+        const roadH = new THREE.Mesh(
+          new THREE.BoxGeometry(70, 0.04, 3),
+          roadMat,
+        );
+        roadH.position.y = 0.03;
+        S.add(roadH);
+        const roadV = new THREE.Mesh(
+          new THREE.BoxGeometry(3, 0.04, 49),
+          roadMat,
+        );
+        roadV.position.set(0, 0.03, 3.5);
+        S.add(roadV);
+        [
+          [0, -11.5, -11.5, 16, 16],
+          [1, -11.5, 11.5, 16, 16],
+          [2, 11.5, -11.5, 16, 16],
+          [3, 11.5, 11.5, 16, 16],
+          [4, 0, -25, 10, 8],
+        ].forEach(([fi, x, z, w, d]) => {
+          const m = new THREE.MeshBasicMaterial({ color: 0x0b111d });
+          const p = new THREE.Mesh(new THREE.PlaneGeometry(w, d), m);
+          p.rotation.x = -Math.PI / 2;
+          p.position.set(x, 0.02, z);
+          p.userData.feeder = fi;
+          groups[fi].add(p);
+          addTrim(
+            fi,
+            m,
+            new THREE.Color(feeders[fi].color).multiplyScalar(0.22).getHex(),
+            0x0b111d,
+          );
+        });
+
+        // residential (F1 north, F2 south): small houses with pitched roofs
+        const roofMat = new THREE.MeshStandardMaterial({
+          color: 0x232c3d,
+          roughness: 0.9,
+        });
+        function addHouse(fi, x, z) {
+          const w = 1.5 + Math.random() * 0.4,
+            h = 1 + Math.random() * 0.6,
+            d = 1.5 + Math.random() * 0.4;
+          addBox(fi, x, z, w, h, d, 1, 1);
+          const roof = new THREE.Mesh(
+            new THREE.ConeGeometry(Math.max(w, d) * 0.78, 0.7, 4),
+            roofMat,
+          );
+          roof.position.set(x, h + 0.35, z);
+          roof.rotation.y = Math.PI / 4;
+          roof.userData.feeder = fi;
+          groups[fi].add(roof);
+        }
+        for (let c = 0; c < 5; c++)
+          for (let r = 0; r < 4; r++) {
+            addHouse(0, -17 + c * 3, -17 + r * 3.5);
+            addHouse(1, -17 + c * 3, 7 + r * 3.5);
+          }
+
+        // downtown commercial (F3): towers
+        for (let c = 0; c < 4; c++)
+          for (let r = 0; r < 3; r++) {
+            const w = 2.2 + Math.random() * 0.8,
+              h = 3.5 + Math.random() * 9;
+            addBox(
+              2,
+              5.5 + c * 4,
+              -17 + r * 5,
+              w,
+              h,
+              w,
+              Math.max(1, Math.round(w / 1.4)),
+              Math.max(1, Math.round(h / 1.4)),
+            );
+          }
+
+        // industrial (F4): warehouses + chimneys with beacons
+        const steel = new THREE.MeshStandardMaterial({
+          color: 0x3a4456,
+          roughness: 0.6,
+          metalness: 0.4,
+        });
+        [
+          [7, 7],
+          [14.5, 7],
+          [7, 13.5],
+          [14.5, 13.5],
+        ].forEach(([x, z]) => addBox(3, x, z, 5.5, 2.2, 4.5, 3, 1));
+        const beaconMat = new THREE.MeshBasicMaterial({ color: 0xff3b3b });
+        [10.2, 11.2].forEach((x) => {
+          const ch = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.3, 0.45, 5.5, 12),
+            steel,
+          );
+          ch.position.set(x, 2.75, 10.2);
+          ch.userData.feeder = 3;
+          groups[3].add(ch);
+          const b = new THREE.Mesh(
+            new THREE.SphereGeometry(0.22, 10, 10),
+            beaconMat,
+          );
+          b.position.set(x, 5.7, 10.2);
+          b.userData.feeder = 3;
+          groups[3].add(b);
+        });
+        addTrim(3, beaconMat, 0xff3b3b, 0x2a0d0d);
+
+        // hospital (F5): main block + wings + red cross on the roof
+        addBox(4, 0, -25, 6, 3.2, 3.6, 3, 1);
+        addBox(4, -4, -25, 2, 2.2, 3, 1, 1);
+        addBox(4, 4, -25, 2, 2.2, 3, 1, 1);
+        const crossMat = new THREE.MeshBasicMaterial({ color: 0xff3b5c });
+        [
+          [1.8, 0.5],
+          [0.5, 1.8],
+        ].forEach(([w, d]) => {
+          const c = new THREE.Mesh(new THREE.BoxGeometry(w, 0.2, d), crossMat);
+          c.position.set(0, 3.35, -25);
+          c.userData.feeder = 4;
+          groups[4].add(c);
+        });
+        addTrim(4, crossMat, 0xff3b5c, 0x3a1018);
+
+        // street lighting (F6)
+        const poleMat = new THREE.MeshStandardMaterial({ color: 0x2a3144 });
+        const headMat = new THREE.MeshBasicMaterial({ color: 0xffe9a8 });
+        const glowMat = new THREE.MeshBasicMaterial({
+          color: 0xffd58a,
+          transparent: true,
+          opacity: 0.2,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+        });
+        addTrim(5, headMat, 0xffe9a8, 0x2a3144);
+        const poleGeo = new THREE.CylinderGeometry(0.05, 0.07, 2.2, 6),
+          headGeo = new THREE.SphereGeometry(0.16, 8, 8),
+          glowGeo = new THREE.CircleGeometry(1.7, 20);
+        function addLamp(x, z) {
+          const p = new THREE.Mesh(poleGeo, poleMat);
+          p.position.set(x, 1.1, z);
+          p.userData.feeder = 5;
+          const h = new THREE.Mesh(headGeo, headMat);
+          h.position.set(x, 2.3, z);
+          h.userData.feeder = 5;
+          const g = new THREE.Mesh(glowGeo, glowMat);
+          g.rotation.x = -Math.PI / 2;
+          g.position.set(x, 0.06, z);
+          groups[5].add(p, h, g);
+        }
+        for (let x = -24; x <= 24; x += 4)
+          if (Math.abs(x) > 2.5) {
+            addLamp(x, 2.2);
+            addLamp(x, -2.2);
+          }
+        for (let z = -20; z <= 26; z += 4)
+          if (Math.abs(z) > 2.5) {
+            addLamp(2.2, z);
+            addLamp(-2.2, z);
+          }
+
+        // grid substation + incoming line (main breaker)
+        const subGroup = new THREE.Group();
+        subGroup.position.set(-27, 0, 0);
+        S.add(subGroup);
+        const sb = new THREE.Mesh(
+          new THREE.BoxGeometry(4, 2, 5),
+          new THREE.MeshStandardMaterial({
+            color: 0x2b3547,
+            roughness: 0.6,
+            metalness: 0.3,
+          }),
+        );
+        sb.position.y = 1;
+        sb.userData.main = true;
+        subGroup.add(sb);
+        [-1.5, 0, 1.5].forEach((z) => {
+          const t = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.45, 0.45, 1.6, 14),
+            steel,
+          );
+          t.position.set(0, 2.8, z);
+          t.userData.main = true;
+          subGroup.add(t);
+        });
+        const subLight = new THREE.Mesh(
+          new THREE.SphereGeometry(0.35, 16, 16),
+          new THREE.MeshBasicMaterial({ color: 0x34d399 }),
+        );
+        subLight.position.set(0, 4.2, 0);
+        subLight.userData.main = true;
+        subGroup.add(subLight);
+        const wireMat = new THREE.LineBasicMaterial({ color: 0x38bdf8 });
+        [-33, -39].forEach((px) => {
+          const py = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.12, 0.22, 8, 8),
+            steel,
+          );
+          py.position.set(px, 4, 0);
+          S.add(py);
+          const arm = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 4), steel);
+          arm.position.set(px, 7.6, 0);
+          S.add(arm);
+        });
+        [-1.5, 0, 1.5].forEach((z) => {
+          S.add(
+            new THREE.Line(
+              new THREE.BufferGeometry().setFromPoints([
+                new THREE.Vector3(-27, 3.7, z),
+                new THREE.Vector3(-33, 7.6, z),
+                new THREE.Vector3(-39, 7.6, z),
+              ]),
+              wireMat,
+            ),
+          );
+        });
+
+        // floating labels (HTML, projected from 3D positions)
+        const labelDefs = [
+          { fi: 0, pos: new THREE.Vector3(-11, 3.5, -12) },
+          { fi: 1, pos: new THREE.Vector3(-11, 3.5, 12) },
+          { fi: 2, pos: new THREE.Vector3(11, 14, -12) },
+          { fi: 3, pos: new THREE.Vector3(11, 6.5, 10) },
+          { fi: 4, pos: new THREE.Vector3(0, 4.8, -25) },
+          { fi: 5, pos: new THREE.Vector3(0, 3.2, 0) },
+          { main: true, pos: new THREE.Vector3(-27, 5, 0) },
+        ];
+        labelDefs.forEach((d) => {
+          d.el = document.createElement("div");
+          d.el.className =
+            "absolute px-2 py-1 rounded-lg text-center whitespace-nowrap";
+          d.el.style.cssText = "left:0;top:0;background:rgba(7,11,20,.82);";
+          $("cityLabels").appendChild(d.el);
+        });
+        function updateCityLabels() {
+          labelDefs.forEach((d) => {
+            if (d.main) {
+              d.el.innerHTML = `<div class="text-[10px] font-semibold text-slate-200">Grid substation</div><div class="text-[11px] font-mono" style="color:${state.main ? "#34d399" : "#f43f5e"}">${state.main ? "BREAKER CLOSED" : "BREAKER OPEN"}</div>`;
+              d.el.style.border = `1px solid ${state.main ? "rgba(52,211,153,.5)" : "rgba(244,63,94,.7)"}`;
+              return;
+            }
+            const f = feeders[d.fi],
+              on = energised(f),
+              backup = f.type === "hos" && !on;
+            d.el.innerHTML = `<div class="text-[10px] font-semibold" style="color:${on ? f.color : "#64748b"}">${f.id} · ${f.name}</div><div class="text-[11px] font-mono" style="color:${on ? "#e2e8f0" : backup ? "#fbbf24" : "#f43f5e"}">${on ? f.load.toFixed(1) + " MW" : backup ? "BACKUP GEN" : "NO POWER"}</div>`;
+            d.el.style.border = `1px solid ${on ? f.color + "66" : "rgba(100,116,139,.4)"}`;
+          });
+        }
+
+        // state → lights
+        function updateCityLights() {
+          feeders.forEach((f, i) => {
+            const backup = f.type === "hos" && !energised(f);
+            mats[i].forEach((m) =>
+              m.emissive.setHex(backup ? 0xffa94d : f.warm),
+            );
+          });
+          subLight.material.color.setHex(state.main ? 0x34d399 : 0xf43f5e);
+          wireMat.color.setHex(state.main ? 0x38bdf8 : 0x475569);
+        }
+
+        // orbit camera + picking
+        const cc = {
+          theta: 0.9,
+          phi: 0.95,
+          r: 62,
+          target: new THREE.Vector3(0, 1, 0),
+          auto: true,
+        };
+        const cEl = R.domElement,
+          tmp = new THREE.Vector3();
+        let cDrag = null;
+        cEl.addEventListener("pointerdown", (e) => {
+          cDrag = { x: e.clientX, y: e.clientY, moved: 0 };
+          cEl.setPointerCapture(e.pointerId);
+        });
+        cEl.addEventListener("pointermove", (e) => {
+          if (!cDrag) return;
+          const dx = e.clientX - cDrag.x,
+            dy = e.clientY - cDrag.y;
+          cDrag.x = e.clientX;
+          cDrag.y = e.clientY;
+          cDrag.moved += Math.abs(dx) + Math.abs(dy);
+          cc.theta -= dx * 0.006;
+          cc.phi = Math.max(0.3, Math.min(1.45, cc.phi - dy * 0.006));
+        });
+        cEl.addEventListener("pointerup", (e) => {
+          if (cDrag && cDrag.moved < 5) pick(e);
+          cDrag = null;
+        });
+        cEl.addEventListener(
+          "wheel",
+          (e) => {
+            e.preventDefault();
+            cc.r = Math.max(18, Math.min(90, cc.r + e.deltaY * 0.04));
+          },
+          { passive: false },
+        );
+        const ray = new THREE.Raycaster(),
+          mouse = new THREE.Vector2();
+        function pick(e) {
+          const r = cEl.getBoundingClientRect();
+          mouse.set(
+            ((e.clientX - r.left) / r.width) * 2 - 1,
+            -((e.clientY - r.top) / r.height) * 2 + 1,
+          );
+          ray.setFromCamera(mouse, C);
+          const hit = ray
+            .intersectObjects(S.children, true)
+            .find(
+              (h) =>
+                h.object.userData.feeder !== undefined ||
+                h.object.userData.main,
+            );
+          if (!hit) return;
+          if (hit.object.userData.main) toggleMain();
+          else toggleFeeder(hit.object.userData.feeder);
+        }
+
+        function renderCity(dt) {
+          if (cc.auto && !cDrag) cc.theta += dt * 0.04;
+          C.position.set(
+            cc.target.x + cc.r * Math.sin(cc.phi) * Math.sin(cc.theta),
+            cc.target.y + cc.r * Math.cos(cc.phi),
+            cc.target.z + cc.r * Math.sin(cc.phi) * Math.cos(cc.theta),
+          );
+          C.lookAt(cc.target);
+
+          // smooth fade of lights toward on / backup / off
+          feeders.forEach((f, i) => {
+            const on = energised(f),
+              backup = f.type === "hos" && !on;
+            const target = on ? 1 : backup ? 0.45 : 0;
+            f.lit += (target - f.lit) * Math.min(1, dt * 6);
+            mats[i].forEach((m) => {
+              m.emissiveIntensity = 1.3 * f.lit;
+            });
+            trims[i].forEach((t) => t.m.color.copy(t.off).lerp(t.on, f.lit));
+          });
+          glowMat.opacity = 0.2 * feeders[5].lit;
+
+          const w = host.clientWidth,
+            h = host.clientHeight;
+          labelDefs.forEach((d) => {
+            tmp.copy(d.pos).project(C);
+            d.el.style.display = tmp.z < 1 ? "block" : "none";
+            d.el.style.transform = `translate(${(tmp.x * 0.5 + 0.5) * w}px, ${(-tmp.y * 0.5 + 0.5) * h}px) translate(-50%, -100%)`;
+          });
+          R.render(S, C);
+        }
+
+        function cityResize() {
+          const w = host.clientWidth,
+            h = host.clientHeight;
+          R.setSize(w, h);
+          C.aspect = w / h;
+          C.updateProjectionMatrix();
+        }
+        new ResizeObserver(cityResize).observe(host);
+        cityResize();
+
+        Object.assign(window, {
+          renderCity,
+          updateCityLights,
+          updateCityLabels,
+        });
+      })();
+
+      updateCityLights();
+      tick();
+      updateRingColors();
+      resize();
+      animate();
+      setInterval(tick, 1000);
+    </script>
+  </body>
+</html>
